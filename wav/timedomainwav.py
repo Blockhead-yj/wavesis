@@ -117,8 +117,7 @@ class TimeDomainWav(BaseWav):
             fft_value = np.fft.fft(windowed_value) / self.length
         
         # 计算频率
-        freq = np.arange(self.length) * self.sample_frequency / (self.length)
-
+        freq = np.arange(self.length) / self.length * self.sample_frequency
         fft_wav = fdwav.FrequencyDomainWav(fft_value, freq)[:self.length // 2]  # 只取傅里叶变换结果的前一半
         return fft_wav
 
@@ -253,15 +252,21 @@ class TimeDomainWav(BaseWav):
         
         Returns  :
         -------
-        imfs: ndarray
+        (imfs, res): (ndarray, 1d-array)
         内涵模态分量(Intrinsic Mode Functions, IMF)的矩阵, 每一行代表一个分量
         
         To do: 把输出调整成wavesis的风格(输出成值、wav类或wav类的列表)
         """
         # 直接调用pyEMD库的算法
         pyemd = EMD()
-        imfs = pyemd(self.values)
-        return imfs
+        pyemd.emd(self.values)
+        imfs, res = pyemd.get_imfs_and_residue()
+        return imfs, res
+
+    # 时频分析
+    def time_frequency_analysis(self, NFFT=256, Fs=8000, mode='psd'):
+        spectrum, freqs, times = plt.specgram(self.values, NFFT, Fs, noverlap=NFFT // 2, mode=mode)
+        return freqs, times, spectrum
 
 # To do: 测试代码
 if __name__ == "__main__":

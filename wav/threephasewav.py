@@ -8,13 +8,42 @@ version: 1.0
 '''
 
 import warnings
+import copy
+from inspect import ismethod
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 
 from .basewav import BaseWav
 from . import frequencydomainwav as fdwav
-from . import timedomainwav as fdwav
+from . import timedomainwav as tdwav
+
+
+class WavBundle(object):
+    '''
+    波束类
+    把多个波“捆”成束进行统一处理，即对多个波进行统一的操作
+    '''
+    def __init__(self, **kwargs) -> None:
+        self.wavnames = [key for key in kwargs.keys()]
+        self.wavs = [copy.deepcopy(value) for value in kwargs.values()]
+
+    def __getattr__(self, name):
+        res = [getattr(i_wav, name) for i_wav in self.wavs]
+        if not ismethod(getattr(self.wavs[0], name)): # 对于函数属性，直接存储为结果
+            res_wav = res
+        else: # 对于函数方法，先保存为RollingWav的一个属性，再随后对RollingWav的调用中，再将方法参数输入
+            self.funcs = res
+            res_wav = self
+        return res_wav
+    
+    # 对于函数方法的rolling调用，参数在这里输入
+    # 由于函数方法的输出多种多样，因此这里的输出不强制转换为Wav，而是直接输出列表
+    def __call__(self, *args, **kwargs):
+        res = [func(*args, **kwargs) for func in self.funcs] 
+        return res
+
+
 
 class threephasewav(object):
     '''

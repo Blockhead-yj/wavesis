@@ -67,6 +67,28 @@ class FrequencyDomainWav(BaseWav):
 
         return part_wav
 
+    def find_max_peak(self, start_freq=0, end_freq=np.inf):
+        """
+        在一定频率范围内查找最大的幅值值及相应的频率
+        默认为从0到正无穷查找，这样找出来的是基频
+        Parameters  :
+        ----------
+        start_freq: int or float
+        起始频率范围
+        end_freq: int or float
+        终止频率范围
+
+        Returns  : 
+        -------
+        (max_peak_frequency, max_peak_magnitude)
+        
+        """
+        
+        search_space = self.get_frequency_band(start_freq, end_freq)
+        max_peak_frequency = search_space.frequency[np.argmax(search_space.values)]
+        max_peak_magnitude = np.max(search_space.values)
+
+        return (max_peak_frequency, max_peak_magnitude)
     # 在频域内计算的指标/依赖频率信息计算的指标
     @property
     def FC(self):
@@ -105,29 +127,8 @@ class FrequencyDomainWav(BaseWav):
         return np.sqrt(self.VF)
     
     @property
-    def find_max_peak(self, start_freq=0, end_freq=np.inf):
-        """
-        在一定频率范围内查找最大的幅值值及相应的频率
-        默认为从0到正无穷查找，这样找出来的是基频
-        Parameters  :
-        ----------
-        start_freq: int or float
-        起始频率范围
-        end_freq: int or float
-        终止频率范围
-
-        Returns  : 
-        -------
-        (max_peak_frequency, max_peak_magnitude)
-        
-        """
-        
-        search_space = self.get_frequency_band(start_freq, end_freq)
-        max_peak_frequency = search_space.frequency[np.argmax(search_space.values)]
-        max_peak_magnitude = np.max(search_space.values)
-
-        return (max_peak_frequency, max_peak_magnitude)
-
+    def baseband(self):
+        return self.find_max_peak()
 
     def THD(self, max_harmonic_num=150, leaky_index=1):
         """ 谐波畸变率
@@ -171,11 +172,11 @@ class FrequencyDomainWav(BaseWav):
         return total_harmonic_distortion
 
     # 定制绘图函数
-    def plot(self, magnitude_to_log=False):
+    def plot(self, magnitude_to_log=False, *args, **kwargs):
         if magnitude_to_log:
-            plt.plot(self.frequency, np.log(self.values))
+            plt.plot(self.frequency, np.log(self.values), *args, **kwargs)
         else:
-            plt.plot(self.frequency, self.values)
+            plt.plot(self.frequency, self.values, *args, **kwargs)
         
         return None
 
@@ -206,4 +207,8 @@ class FrequencyDomainWav(BaseWav):
 
 # todo: 测试代码
 if __name__ == "__main__":
-    pass
+    x = np.linspace(0, 1000, 10000)
+    y = np.cos(x) 
+    test_wav = FrequencyDomainWav(y, x)
+    for property in ["FC", "MSF", "VF", "RMSF", "RVF"]:
+        print(property +": %.4f" % getattr(test_wav, property))

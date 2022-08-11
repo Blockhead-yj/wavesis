@@ -54,7 +54,7 @@ class BaseWav(object):
             if self.frequency is None or isinstance(self.frequency, int):
                 return self.__class__(self.values[item], self.frequency)
             elif len(self.frequency) > 1:
-                    return self.__class__(self.values[item], self.frequency[item])
+                return self.__class__(self.values[item], self.frequency[item])
             else :
                 Warning('The type of self.frequency is incorrect, please check it!')
                 return self.__class__(self.values[item], self.frequency)
@@ -226,7 +226,7 @@ class BaseWav(object):
 
 if __name__ == "__main__":
     # init basewav
-    x = np.linspace(0, 1000, 10000)
+    x = np.linspace(0, 1000, 800000)
     y1 = np.cos(x) 
     y2 = 3 * np.sin(10 * x) + 1
     test_wav1 = BaseWav(y1)
