@@ -13,8 +13,10 @@ To do: 与目前系统里的计算方式对比，看结果是否有差异，看�
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
+
 from .basewav import BaseWav
-from . import frequencydomainwav as fdwav
+from .rollingwav import RollingWav
+from . import timedomainwav as tdwav
 
 
 class FrequencyDomainWav(BaseWav):
@@ -23,7 +25,7 @@ class FrequencyDomainWav(BaseWav):
 
     在频域内进行计算的指标放在这个类里
     '''
-    def __init__(self, values, frequency) -> None:
+    def __init__(self, values, frequency):
         ''' 
         初始化FDWav, 频域信号初始化必须提供频率信息
         
@@ -181,7 +183,7 @@ class FrequencyDomainWav(BaseWav):
         return None
 
     # 在频域内进行的计算或变换
-    def fft(self, window='hann', convert2real=True):
+    def fft(self, window='hann', convert2real=True, demean=False):
         '''
         在频域内进行加窗傅里叶变换, 从频域到时域不需要除以数据长度
 
@@ -196,14 +198,16 @@ class FrequencyDomainWav(BaseWav):
         TDWav
             傅里叶变换后的时域信号
         '''
+        if demean:
+            windowed_value = (self.values - self.Mean) * signal.get_window(window, self.length)
         # 加窗抑制频谱泄露
-        v = self.values * signal.get_window(window, self.length)
+        windowed_value = self.values * signal.get_window(window, self.length)
         if convert2real:
-            v_fft = np.abs(np.fft.fft(v)) 
+            windowed_value_fft = np.abs(np.fft.fft(windowed_value)) 
         else:
-            v_fft = np.fft.fft(v)
+            windowed_value_fft = np.fft.fft(windowed_value)
 
-        return fdwav.TimeDomainWav(v_fft, sample_frequency=1)
+        return tdwav.TimeDomainWav(windowed_value_fft, sample_frequency=1)
 
 # todo: 测试代码
 if __name__ == "__main__":

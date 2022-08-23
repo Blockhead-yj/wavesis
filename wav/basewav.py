@@ -21,7 +21,7 @@ class BaseWav(object):
     '''
     基础波类，基础振动信号类
     '''
-    def __init__(self, values, frequency=None) -> None:
+    def __init__(self, values, frequency=None):
         """ 
         初始化Wav
 
@@ -60,6 +60,9 @@ class BaseWav(object):
                 return self.__class__(self.values[item], self.frequency)
         elif isinstance(item, int):
             return self.values[item]
+
+    def __len__(self):
+        return self.length
 
     # To do: 实现基本的加减乘除功能
     def _check_identity(self, other):

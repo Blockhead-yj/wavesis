@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 from scipy import signal
 from PyEMD import EMD
 
+from .rollingwav import RollingWav
+
 from .basewav import BaseWav
 from . import frequencydomainwav as fdwav
 
@@ -26,7 +28,7 @@ class TimeDomainWav(BaseWav):
 
     在时域内计算的指标放在这个类里面计算，对这个类调用频域内计算的指标会自动转化为对该类进行默认的加窗傅里叶变换后再计算
     '''
-    def __init__(self, values, sample_frequency) -> None:
+    def __init__(self, values, sample_frequency):
         """ 
         初始化TDWav, 时域信号初始化必须提供采样率
 
@@ -94,7 +96,7 @@ class TimeDomainWav(BaseWav):
         return None
 
     # 在时域上进行的变换
-    def fft(self, window='hann', convert2real=True):
+    def fft(self, window='hann', convert2real=True, demean=False):
         '''
         在时域内进行加窗傅里叶变换，需要除以数据长度
 
@@ -109,6 +111,8 @@ class TimeDomainWav(BaseWav):
         fft_wav: FrequencyDomainWav
             傅里叶变换后的频域信号
         '''
+        if demean:
+            windowed_value = (self.values - self.Mean) * signal.get_window(window, self.length)
         # 加窗抑制频谱泄露
         windowed_value = self.values * signal.get_window(window, self.length)
         if convert2real:
