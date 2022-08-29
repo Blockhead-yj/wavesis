@@ -166,9 +166,9 @@ class threephasewav(WavBundle):
         i_d = np.sqrt(2 / 3) * ia - np.sqrt(1 / 6) * ib - np.sqrt(1 / 6) * ic
         i_q = np.sqrt(1 / 2) * ib - np.sqrt(1 / 2) * ic
         if magnitude:
-            return np.sqrt(np.power(i_d, 2), np.power(i_q, 2))
+            return tdwav.TimeDomainWav(np.sqrt(np.power(i_d, 2), np.power(i_q, 2)), self.sample_frequency)
         else:
-            return i_d, i_q
+            return WavBundle(i_d=tdwav.TimeDomainWav(i_d, self.sample_frequency), i_q=tdwav.TimeDomainWav(i_q, self.sample_frequency))
     # To do: 对称分量法
     # To do: 相位不平衡算法；幅值不平衡算法
 

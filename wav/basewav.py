@@ -51,7 +51,7 @@ class BaseWav(object):
     def __getitem__(self, item): 
         cls = type(self) 
         if isinstance(item, slice):
-            if self.frequency is None or isinstance(self.frequency, int):
+            if self.frequency is None or isinstance(self.frequency, (int, float)):
                 return self.__class__(self.values[item], self.frequency)
             elif len(self.frequency) > 1:
                 return self.__class__(self.values[item], self.frequency[item])
@@ -105,7 +105,13 @@ class BaseWav(object):
             self.values = self.values - np.mean(self.values)
         else:
             return self.__class__(self.values - np.mean(self.values), self.frequency)
-    
+    # 归一化
+    def normalize(self, inplace=False):
+        if inplace:
+            self.values = self.values / np.max(np.abs(self.values))
+        else:
+            return self.__class__(self.values / np.max(np.abs(self.values)), self.frequency)        
+
     # properties
     # 不依赖任何时间信息或频率信息计算的常用指标
     # 指标全部以属性而不是函数的形式调用
