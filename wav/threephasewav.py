@@ -10,6 +10,7 @@ version: 1.0
 
 from inspect import ismethod
 import numpy as np
+import matplotlib.pyplot as plt
 
 from .basewav import BaseWav
 from .rollingwav import RollingWav, RollingWavBundle
@@ -49,8 +50,10 @@ class WavBundle(object):
     def __getattr__(self, name):
         if not ismethod(getattr(self.wavs[0], name)): # 对于函数属性，直接存储为结果
             res = [getattr(i_wav, name) for i_wav in self.wavs]
-        else: # 对于函数方法，直接调用WavBundle自己的实现
+        elif name in self.__dict__: # 对于函数方法，只能调用WavBundle自身的实现，否则引发错误
             res = getattr(self, name)
+        else:
+            raise ValueError(self.__class__.__name__ + 'dose not have function: ' + name + ', please use apply instead.')
         return res
 
     # 直接打印时，显示wavs
@@ -166,9 +169,16 @@ class threephasewav(WavBundle):
         i_d = np.sqrt(2 / 3) * ia - np.sqrt(1 / 6) * ib - np.sqrt(1 / 6) * ic
         i_q = np.sqrt(1 / 2) * ib - np.sqrt(1 / 2) * ic
         if magnitude:
-            return tdwav.TimeDomainWav(np.sqrt(np.power(i_d, 2), np.power(i_q, 2)), self.sample_frequency)
+            return tdwav.TimeDomainWav(np.sqrt(np.power(i_d, 2) + np.power(i_q, 2)), self.sample_frequency)
         else:
             return WavBundle(i_d=tdwav.TimeDomainWav(i_d, self.sample_frequency), i_q=tdwav.TimeDomainWav(i_q, self.sample_frequency))
+
+    def plot(self):
+        self.data['ia'].plot('r-', label='A相电流')
+        self.data['ib'].plot('g-', label='B相电流')
+        self.data['ic'].plot('b-', label='C相电流')
+        plt.legend()
+        return None
     # To do: 对称分量法
     # To do: 相位不平衡算法；幅值不平衡算法
 

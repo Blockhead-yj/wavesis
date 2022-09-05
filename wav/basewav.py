@@ -232,6 +232,10 @@ class BaseWav(object):
         '''
         rolling_wav = RollingWav(self, window_width, step)
         return rolling_wav
+    # 拓展函数，可对数据直接进行自定义的变换和计算
+    def apply(self, func, *args, **kwargs):
+        self.values = func(self.values, *args, **kwargs)
+        return self
 
 if __name__ == "__main__":
     # init basewav
