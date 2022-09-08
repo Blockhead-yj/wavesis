@@ -42,6 +42,10 @@ class WavBundle(object):
         self.width = [len(i_wav) for i_wav in self.wavs]
         if len(set(self.width)) == 1:
             self.width = self.width[0]
+    
+    @staticmethod
+    def init_unnamed_wavs_from_list(li):
+        return WavBundle(**{'wav_' + str(i): i_wav for i, i_wav in enumerate(li)})
 
     @property
     def shape(self):
@@ -75,7 +79,11 @@ class WavBundle(object):
 
     def apply(self, func, *args, **kwargs):
         res = [func(wav, *args, **kwargs) for wav in self.wavs]
-        return self.__class__(**dict(zip(self.wavnames, res)))
+        length = np.mean([len(x) for x in res])
+        try:
+            res = self.__class__(**dict(zip(self.wavnames, res))) if length > 5 else np.asarray(res)
+        finally:
+            return res
 
     # 实现滑动窗计算，每个滑动窗都是一个WavBundle，可以在每个滑动窗进行所有指标的计算和转换
     def rolling(self, window_width, step=1):
@@ -127,7 +135,23 @@ class threephasewav(WavBundle):
             if not isinstance(v, (BaseWav, RollingWav)) and not v is None:
                 self.data[k] = tdwav.TimeDomainWav(v, self.sample_frequency)
         WavBundle.__init__(self, **{k:v for k,v in self.data.items() if v is not None})
-    
+
+    @staticmethod
+    def init_wavs_from_rawdata(data, colname=['A相电流', 'B相电流', 'C相电流'], sample_frequency=8000, with_voltage=False, voltage_colname=['A相电压', 'B相电压', 'C相电压']):
+        if with_voltage:
+            currentA = tdwav.TimeDomainWav(data[colname[0]], sample_frequency=sample_frequency)
+            currentB = tdwav.TimeDomainWav(data[colname[1]], sample_frequency=sample_frequency)
+            currentC = tdwav.TimeDomainWav(data[colname[2]], sample_frequency=sample_frequency)
+            voltageA = tdwav.TimeDomainWav(data[voltage_colname[0]], sample_frequency=sample_frequency)
+            voltageB = tdwav.TimeDomainWav(data[voltage_colname[1]], sample_frequency=sample_frequency)
+            voltageC = tdwav.TimeDomainWav(data[voltage_colname[2]], sample_frequency=sample_frequency)
+            return threephasewav(ia=currentA, ib=currentB, ic=currentC, ua=voltageA, ub=voltageB, uc=voltageC)
+        else:
+            currentA = tdwav.TimeDomainWav(data[colname[0]], sample_frequency=sample_frequency)
+            currentB = tdwav.TimeDomainWav(data[colname[1]], sample_frequency=sample_frequency)
+            currentC = tdwav.TimeDomainWav(data[colname[2]], sample_frequency=sample_frequency)
+            return threephasewav(ia=currentA, ib=currentB, ic=currentC)
+
     def _data_check(self):
         # 检查电流数据是否完整
         if self.data['ia'] and self.data['ib'] and self.data['ic']:
