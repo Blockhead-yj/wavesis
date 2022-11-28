@@ -79,9 +79,8 @@ class WavBundle(object):
 
     def apply(self, func, *args, **kwargs):
         res = [func(wav, *args, **kwargs) for wav in self.wavs]
-        length = np.mean([len(x) for x in res])
         try:
-            res = self.__class__(**dict(zip(self.wavnames, res))) if length > 5 else np.asarray(res)
+            res = np.asarray(res) if isinstance(res[0], (tuple,)) else self.__class__(**dict(zip(self.wavnames, res)))
         finally:
             return res
 

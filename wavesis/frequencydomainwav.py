@@ -183,7 +183,7 @@ class FrequencyDomainWav(BaseWav):
         return None
 
     # 在频域内进行的计算或变换
-    def fft(self, window='hann', convert2real=True, demean=False):
+    def fft(self, window='hann', convert2real=True):
         '''
         在频域内进行加窗傅里叶变换, 从频域到时域不需要除以数据长度
 
@@ -198,14 +198,14 @@ class FrequencyDomainWav(BaseWav):
         TDWav
             傅里叶变换后的时域信号
         '''
-        if demean:
-            windowed_value = (self.values - self.Mean) * signal.get_window(window, self.length)
         # 加窗抑制频谱泄露
-        windowed_value = self.values * signal.get_window(window, self.length)
+        window = signal.get_window(window, self.length)
+        windowed_value = self.values * window
+        adjust_coefficient = round(1 / np.mean(window), 4)
         if convert2real:
-            windowed_value_fft = np.abs(np.fft.fft(windowed_value)) 
+            windowed_value_fft = np.abs(np.fft.fft(windowed_value)) * adjust_coefficient
         else:
-            windowed_value_fft = np.fft.fft(windowed_value)
+            windowed_value_fft = np.fft.fft(windowed_value) * adjust_coefficient
 
         return tdwav.TimeDomainWav(windowed_value_fft, sample_frequency=1)
 
