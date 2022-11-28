@@ -14,7 +14,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
 from .rollingwav import RollingWav
-
+from functools import cached_property
 
 # Base Class
 class BaseWav(object):
@@ -115,49 +115,49 @@ class BaseWav(object):
     # properties
     # 不依赖任何时间信息或频率信息计算的常用指标
     # 指标全部以属性而不是函数的形式调用
-    @property
+    @cached_property
     def PP(self):
         '''
         最大最小值, 峰峰值PP
         '''
         return np.max(self.values) - np.min(self.values)
 
-    @property
+    @cached_property
     def Mean(self):
         '''
         平均值(一阶矩)
         '''
         return np.mean(self.values)
 
-    @property
+    @cached_property
     def RMS(self):
         '''
         均方根值(二阶矩)
         '''
         return np.sqrt(np.mean(np.power(self.values, 2)))
 
-    @property
+    @cached_property
     def Var(self):
         '''
         方差
         '''
         return np.mean(np.power(self.values - self.Mean, 2))
 
-    @property
+    @cached_property
     def SD(self):
         '''
         标准差
         '''
         return np.sqrt(self.Var)
 
-    @property
+    @cached_property
     def Skewness(self):
         '''
         偏度 SK(三阶矩)
         '''
         return np.mean(np.power(self.values - self.Mean, 3)) / np.power(self.SD, 3)
     
-    @property
+    @cached_property
     def IM(self):
         '''
         脉冲指标 IM(Impulse Indicator)
@@ -165,21 +165,21 @@ class BaseWav(object):
         '''
         return np.max(np.abs(self.values)) / np.mean(np.abs(self.values))
 
-    @property
+    @cached_property
     def CR(self):
         '''
         峰值指标 CR(Crest Indicator/Factor)
         '''
         return np.max(np.abs(self.values)) / self.RMS
 
-    @property
+    @cached_property
     def CL(self):
         '''
         裕度指标 CL(Clearance Indicator)
         '''
         return np.max(np.abs(self.values)) / np.power(np.mean(np.sqrt(np.abs(self.values))), 2)
 
-    @property
+    @cached_property
     def Kurtosis(self):
         '''
         峰度 KU(四阶矩)

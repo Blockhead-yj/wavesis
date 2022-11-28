@@ -9,6 +9,7 @@ version: 1.0
 To do: 与目前系统里的计算方式对比，看结果是否有差异，看实现是否正确
 '''
 
+from functools import cached_property
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -92,21 +93,21 @@ class FrequencyDomainWav(BaseWav):
 
         return (max_peak_frequency, max_peak_magnitude)
     # 在频域内计算的指标/依赖频率信息计算的指标
-    @property
+    @cached_property
     def FC(self):
         '''
         重心频率
         '''
         return np.average(self.frequency, weights=self.values)
 
-    @property
+    @cached_property
     def MSF(self):
         '''
         均方频率
         '''
         return np.average(np.power(self.frequency, 2), weights=self.values)
 
-    @property
+    @cached_property
     def VF(self):
         '''
         频率方差
@@ -114,21 +115,21 @@ class FrequencyDomainWav(BaseWav):
         square_deviate_from_mean = np.power(self.frequency - self.FC, 2)
         return np.average(square_deviate_from_mean, weights=self.values)
 
-    @property
+    @cached_property
     def RMSF(self):
         '''
         均方根频率
         '''
         return np.sqrt(self.MSF)
 
-    @property
+    @cached_property
     def RVF(self):
         '''
         频率标准差
         '''
         return np.sqrt(self.VF)
     
-    @property
+    @cached_property
     def baseband(self):
         return self.find_max_peak()
 
