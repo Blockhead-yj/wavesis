@@ -131,7 +131,7 @@ class FrequencyDomainWav(BaseWav):
     
     @cached_property
     def baseband(self):
-        return self.find_max_peak()
+        return self.find_max_peak(5, 95)
 
     def THD(self, max_harmonic_num=150, leaky_index=1):
         """ 谐波畸变率
@@ -175,12 +175,35 @@ class FrequencyDomainWav(BaseWav):
         return total_harmonic_distortion
 
     # 定制绘图函数
-    def plot(self, magnitude_to_log=False, *args, **kwargs):
-        if magnitude_to_log:
+    def plot(self, magnitude2log=False, *args, marker=False, marker_num=20, marker_color='r', prominence=2, **kwargs):
+        if magnitude2log:
             plt.plot(self.frequency, np.log(self.values), *args, **kwargs)
+            plt.xlabel('频率(Hz)', fontdict={'fontsize':16})
+            plt.ylabel('幅值(dB)', fontdict={'fontsize':16})
         else:
             plt.plot(self.frequency, self.values, *args, **kwargs)
-        
+            plt.xlabel('频率(Hz)', fontdict={'fontsize':16})
+            plt.ylabel('幅值', fontdict={'fontsize':16})
+        if marker:
+            self.mark_extreme_frequency(marker_color, prominence, marker_num, magnitude2log)
+        return None
+    # 绘图辅助函数
+    def mark_extreme_frequency(self, color, prominence, marker_num, magnitude2log):
+        '''标记幅值的极值点'''
+        if magnitude2log:
+            plot_values = np.log(self.values)
+            prominence = np.max([prominence, np.std(plot_values)])
+        else:
+            plot_values = self.values
+        peaks_index, peaks_info = signal.find_peaks(plot_values, prominence=prominence)
+        if len(peaks_index)==0 :  # 如果没有找到极值点，直接跳出
+            print('Peaks not found!')
+            return None
+        elif len(peaks_index) >= marker_num:  # 如果找到的极值点过多，取前30大极值点进行绘制
+            peaks_index = peaks_index[np.argsort(peaks_info['prominences'])[-30:]]
+        for idx in peaks_index:
+            plt.scatter(self.frequency[idx], plot_values[idx], c=color, s=6)
+            plt.text(self.frequency[idx], plot_values[idx], "(%.1f)"%self.frequency[idx], c='k', size=20)
         return None
 
     # 在频域内进行的计算或变换
