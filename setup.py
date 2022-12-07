@@ -11,7 +11,7 @@ setuptools.setup(
     description="oop data analysis tools for wave data",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="404",
+    url="https://github.com/Blockhead-yj/wavesis.git",
     packages=setuptools.find_packages(),
     classifiers=[],
     python_requires='>=3.7',
