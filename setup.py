@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="wavesis",
-    version="0.0.6",
+    version="0.0.7",
     author="yjdai",
     author_email="136271877@qq.mail.com",
     description="oop data analysis tools for wave data",
