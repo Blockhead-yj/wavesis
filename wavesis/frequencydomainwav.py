@@ -199,11 +199,11 @@ class FrequencyDomainWav(BaseWav):
         if len(peaks_index)==0 :  # 如果没有找到极值点，直接跳出
             print('Peaks not found!')
             return None
-        elif len(peaks_index) >= marker_num:  # 如果找到的极值点过多，取前30大极值点进行绘制
-            peaks_index = peaks_index[np.argsort(peaks_info['prominences'])[-30:]]
+        elif len(peaks_index) >= marker_num:  # 如果找到的极值点过多，取前marker_num个大极值点进行绘制
+            peaks_index = peaks_index[np.argsort(peaks_info['prominences'])[-marker_num:]]
         for idx in peaks_index:
             plt.scatter(self.frequency[idx], plot_values[idx], c=color, s=6)
-            plt.text(self.frequency[idx], plot_values[idx], "(%.1f)"%self.frequency[idx], c='k', size=20)
+            plt.text(self.frequency[idx], plot_values[idx], "(%.1f, %.1f)"%(self.frequency[idx], plot_values[idx]), c='k', size=20)
         return None
 
     # 在频域内进行的计算或变换

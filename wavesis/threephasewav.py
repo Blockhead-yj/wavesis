@@ -11,12 +11,14 @@ version: 1.0
 from inspect import ismethod
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+from scipy import signal
 
 from .basewav import BaseWav
 from .rollingwav import RollingWav, RollingWavBundle
 from . import frequencydomainwav as fdwav
 from . import timedomainwav as tdwav
-
+from .utils import get_frequency_response
 class WavBundle(object):
     '''
     波束类
@@ -196,13 +198,85 @@ class threephasewav(WavBundle):
         else:
             return WavBundle(i_d=tdwav.TimeDomainWav(i_d, self.sample_frequency), i_q=tdwav.TimeDomainWav(i_q, self.sample_frequency))
 
-    def plot(self):
-        self.data['ia'].plot('r-', label='A相电流')
-        self.data['ib'].plot('g-', label='B相电流')
-        self.data['ic'].plot('b-', label='C相电流')
-        plt.legend()
+    # 对称分量法
+    def symmetrical_components(self, calc_voltage=False):
+        """ 计算给定三相电力系统的对称分量
+
+        Parameters
+        ----------
+        calc_voltage: bool
+            是否计算电压的对称分量，默认为False，代表仅计算电流的对称分量；若为True，则仅计算电压的对称分量
+
+        Returns
+        -------
+        symmetrical_componnents : DataFrame
+            返回含有各相零序、正序和负序分量的df, columns=[A0, A1, A2, B0, B1, B2, C0, C1, C2]
+        """
+        a = np.exp((2 / 3) * np.pi * 1j) # 旋转算子a
+        # 将信号转化为相量
+        if not calc_voltage:
+            complexor_a = self.data['ia'].hilbert(convert2real=False).values
+            complexor_b = self.data['ib'].hilbert(convert2real=False).values
+            complexor_c = self.data['ic'].hilbert(convert2real=False).values
+        else:
+            complexor_a = self.data['ua'].hilbert(convert2real=False).values
+            complexor_b = self.data['ub'].hilbert(convert2real=False).values
+            complexor_c = self.data['uc'].hilbert(convert2real=False).values
+        symmetrical_components = pd.DataFrame()
+        symmetrical_components['A0'] = (complexor_a + complexor_b + complexor_c)
+        symmetrical_components['A1'] = (complexor_a + a * complexor_b + a ** 2 * complexor_c)
+        symmetrical_components['A2'] = (complexor_a + a ** 2 * complexor_b + a * complexor_c)
+        symmetrical_components['B0'] = symmetrical_components['A0']
+        symmetrical_components['B1'] = symmetrical_components['A1'] / a
+        symmetrical_components['B2'] = symmetrical_components['A2'] / (a ** 2)
+        symmetrical_components['C0'] = symmetrical_components['A0']
+        symmetrical_components['C1'] = symmetrical_components['A1'] / (a ** 2)
+        symmetrical_components['C2'] = symmetrical_components['A2'] / a
+        return symmetrical_components
+
+    # 维纳滤波器去除工频及其谐波信号（《Electrical signals analysis of an asynchronous motor for bearing fault detection》）
+    def wiener_filter(self):
+        '''
+        基于Ibrahim的《Electrical signals analysis of an asynchronous motor for bearing fault detection》文章，
+        以电压信号作为参考信号构建维纳滤波器，滤除电流信号中的电气信号，保留机械信号。
+        输出为 (重构信号， 残差， 原始电流信号)
+        '''
+        # 检查电压电流信号是否齐全
+        if self._data_check() != '电流电压数据完整':
+            raise Exception('电压电流数据不全，无法进行滤波！')
+        # 使用A相电流与电压
+        i = self.data['ia'].values
+        u = self.data['ua'].values
+        # 获取冲激响应函数
+        power_freq, _ = self.data['ia'].baseband
+        period_length = int(np.round(self.sample_frequency / power_freq))
+        H, windowed_u = get_frequency_response(i, u, period_length)
+        ifft_hat = np.hstack([np.fft.ifft(np.fft.fft(i_u) * H) for i_u in windowed_u])
+        i_hat = ifft_hat.real
+        residual = i - i_hat
+        return i_hat, residual, i
+
+    def plot(self, voltage=False):
+        if voltage:
+            plt.subplot(121)
+            self.data['ia'].plot('r-', label='A相电流')
+            self.data['ib'].plot('g-', label='B相电流')
+            self.data['ic'].plot('b-', label='C相电流')
+            plt.legend()
+            plt.subplot(122)
+            self.data['ua'].plot('r-', label='A相电压')
+            self.data['ub'].plot('g-', label='B相电压')
+            self.data['uc'].plot('b-', label='C相电压')
+            plt.legend()
+        else:
+            self.data['ia'].plot('r-', label='A相电流')
+            self.data['ib'].plot('g-', label='B相电流')
+            self.data['ic'].plot('b-', label='C相电流')
+            plt.legend() 
+        plt.show()
         return None
-    # To do: 对称分量法
+    
+
     # To do: 相位不平衡算法；幅值不平衡算法
 
 if __name__ == '__main__':
