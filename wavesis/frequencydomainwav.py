@@ -177,7 +177,7 @@ class FrequencyDomainWav(BaseWav):
     # 定制绘图函数
     def plot(self, magnitude2log=False, *args, marker=False, marker_num=20, marker_color='r', prominence=2, **kwargs):
         if magnitude2log:
-            plt.plot(self.frequency, np.log(self.values), *args, **kwargs)
+            plt.plot(self.frequency, 20*np.log10(self.values), *args, **kwargs)
             plt.xlabel('频率(Hz)', fontdict={'fontsize':16})
             plt.ylabel('幅值(dB)', fontdict={'fontsize':16})
         else:
@@ -191,7 +191,7 @@ class FrequencyDomainWav(BaseWav):
     def mark_extreme_frequency(self, color, prominence, marker_num, magnitude2log):
         '''标记幅值的极值点'''
         if magnitude2log:
-            plot_values = np.log(self.values)
+            plot_values = 20*np.log10(self.values)
             prominence = np.max([prominence, np.std(plot_values)])
         else:
             plot_values = self.values

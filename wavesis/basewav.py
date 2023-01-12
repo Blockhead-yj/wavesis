@@ -267,7 +267,6 @@ if __name__ == "__main__":
     wav_prod[:800].plot('r-', label='raw data')
     wav_prod.hilbert()[:800].plot('b-', label='hilbert')
     plt.legend()
-    plt.show()
 
     # test the rolling calculation
     print('test rolling calculation'.center(40, '-'))

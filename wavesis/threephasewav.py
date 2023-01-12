@@ -273,7 +273,6 @@ class threephasewav(WavBundle):
             self.data['ib'].plot('g-', label='B相电流')
             self.data['ic'].plot('b-', label='C相电流')
             plt.legend() 
-        plt.show()
         return None
     
 
