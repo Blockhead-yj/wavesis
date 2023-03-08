@@ -121,7 +121,7 @@ class TimeDomainWav(BaseWav):
             fft_value = np.fft.fft(windowed_value) / self.length * adjust_coefficient
         
         # 计算频率
-        freq = np.arange(self.length) / self.length * self.sample_frequency
+        freq = np.arange(self.length).astype(np.float64) / self.length * self.sample_frequency
         fft_wav = fdwav.FrequencyDomainWav(fft_value, freq)[:self.length // 2]  # 只取傅里叶变换结果的前一半
         return fft_wav
 
@@ -185,13 +185,13 @@ class TimeDomainWav(BaseWav):
         '''
         # 计算自相关的前提是函数f(t)的均值m(t)为零，因此需要先将数据demean
         demean_dat = self.values - self.Mean
-        xcorr = np.correlate(demean_dat, demean_dat, mode="same")
+        xcorr = signal.correlate(demean_dat, demean_dat, mode="same")
         # 加窗抑制频谱泄露
         windowed_xcorr = xcorr * signal.get_window(window, len(xcorr))
         spectrum = np.abs(np.fft.fft(windowed_xcorr)) / self.length
         
         # 计算频率
-        freq = np.arange(self.length) * self.sample_frequency / (self.length)
+        freq = np.arange(self.length).astype(np.float64) * self.sample_frequency / (self.length)
         psd_spectrum = fdwav.FrequencyDomainWav(spectrum, freq)
         return psd_spectrum
 
