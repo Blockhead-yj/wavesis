@@ -9,10 +9,11 @@ version: 1.0
 
 
 from inspect import ismethod
+from typing import List
 import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-from scipy import signal
+import matplotlib.pyplot as plt # type: ignore
+import pandas as pd # type: ignore
+from scipy import signal # type: ignore
 
 from .basewav import BaseWav
 from .rollingwav import RollingWav, RollingWavBundle
@@ -41,7 +42,7 @@ class WavBundle(object):
         self.wavnames = [key for key in kwargs.keys()]
         self.wavs = [value for value in kwargs.values()]
         self.length = len(self.wavs)
-        self.width = [len(i_wav) for i_wav in self.wavs]
+        self.width :List[int]|int = [len(i_wav) for i_wav in self.wavs]
         if len(set(self.width)) == 1:
             self.width = self.width[0]
     

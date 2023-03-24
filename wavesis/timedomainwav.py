@@ -5,22 +5,22 @@ Author: DYJ
 Date: 2022/07/19 14:25:22
 Desc: 时域信号类
       在时域内计算的指标放在这个类里面计算，对这个类调用频域内计算的指标会自动转化为对该类进行默认的加窗傅里叶变换后再计算
-version: 1.0
-To do: 与目前系统里的计算方式对比，看结果是否有差异，看实现是否正确
+version: 1.1
 '''
 
+from functools import lru_cache
 
 import warnings
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy import signal
-from PyEMD import EMD
+import matplotlib.pyplot as plt # type: ignore
+from scipy import signal # type: ignore
+from PyEMD import EMD # type: ignore
 
 from .rollingwav import RollingWav
 
 from .basewav import BaseWav
 from . import frequencydomainwav as fdwav
-
+from .utils import lpc_filter
 
 class TimeDomainWav(BaseWav):
     '''
@@ -54,40 +54,12 @@ class TimeDomainWav(BaseWav):
         self.frequency = self.sample_frequency
 
     # 当需要计算的指标或进行的变换在时域内无法计算时，会自动转向该时域信号以默认参数进行的加窗傅里叶变换后的频域信号进行计算
-    # 如果需要以非默认参数进行的傅里叶变换，请使用reset_freq_domain函数重置频域；或者直接在频域进行计算。
+    # 如果需要以非默认参数进行的傅里叶变换，请主动调用fft方法，直接在频域进行计算。
     def __getattr__(self, name):
         if name in ['FC', 'MSF', 'VF', 'RMSF', 'RVF']:  # 这些指标的计算应该在功率谱上进行计算
-            return getattr(self.psd_spectrum, name)
-        # lazy-evaluation, 惰性求值，知道被访问到时再进行计算而不是在初始化时就计算
-        elif name == "freq_domain": 
-            freq_domain = self.fft()
-            setattr(self, name, freq_domain)
-            return freq_domain
-        elif name == "psd_spectrum":
-            psd_spectrum = self.PSD_Periodogram()
-            setattr(self, name, psd_spectrum)
-            return psd_spectrum
+            return getattr(self.PSD_Periodogram(), name)
         else:
-            return getattr(self.freq_domain, name)
-
-    def reset_freq_domain(self, window='hann', convert2real=True):
-        '''
-        重置频域
-        如果不想使用默认的傅里叶变换参数的结果进行后续频域指标计算, 可以通过这个函数重新计算
-        
-        Parameters
-        ----------
-        window: str or tuple
-        指定傅里叶变换时使用的窗函数, 该参数将被用于调用signal.get_window
-        convert2real: bool
-        是否要将傅里叶变换的结果变为实数(取模)
-        
-        Return
-        ------
-        None
-        '''
-        self.freq_domain = self.fft(window, convert2real)
-        return None
+            return getattr(self.fft(), name)
 
     # 绘图函数
     def plot(self, *args, **kwargs):
@@ -96,6 +68,7 @@ class TimeDomainWav(BaseWav):
         return None
 
     # 在时域上进行的变换
+    @lru_cache(maxsize=4)
     def fft(self, window='hann', convert2real=True):
         '''
         在时域内进行加窗傅里叶变换，需要除以数据长度
@@ -127,6 +100,7 @@ class TimeDomainWav(BaseWav):
 
     # 频谱分析/功率谱分析/功率谱密度
     # 1. 周期图法/直接法
+    @lru_cache(maxsize=4)
     def PSD_Periodogram(self, window='hann'):
         """ 
         直接法求功率谱密度
@@ -147,6 +121,7 @@ class TimeDomainWav(BaseWav):
         return psd_spectrum
 
     # 2. Welch法/改进的直接法(加窗)
+    @lru_cache(maxsize=4)
     def PSD_Welch(self, window='hann', nperseg=8192):
         '''
         用Welch法计算功率谱密度 PSD(Power Spectral Density)
@@ -169,6 +144,7 @@ class TimeDomainWav(BaseWav):
         return psd_spectrum
 
     # 3. 间接法, 自相关函数法
+    @lru_cache(maxsize=4)
     def PSD_autocorrelation(self, window='hann'):
         '''
         用自相关法计算功率谱密度 PSD(Power Spectral Density)
@@ -272,6 +248,12 @@ class TimeDomainWav(BaseWav):
         spectrum, freqs, times = plt.specgram(self.values, NFFT, Fs, noverlap=NFFT // 2, mode=mode)
         return freqs, times, spectrum
 
+    # lpc去除工频
+    def lpc_filter(self, p):
+        x = lpc_filter(self.values, p)
+        return self.__class__(x, self.frequency)
+
+    # Todo: 将循环谱计算整合进wavsis的框架内，而不是单独作为一个工具使用
 # To do: 测试代码
 if __name__ == "__main__":
     pass

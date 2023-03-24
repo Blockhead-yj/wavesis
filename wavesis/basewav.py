@@ -11,8 +11,8 @@ version: 1.0
 
 
 import numpy as np
-import matplotlib.pyplot as plt
-from scipy import signal
+import matplotlib.pyplot as plt # type: ignore
+from scipy import signal # type: ignore
 from .rollingwav import RollingWav
 from functools import cached_property
 
@@ -49,7 +49,6 @@ class BaseWav(object):
 
     # 实现切片功能，对Wav类进行切片仍然得到Wav类
     def __getitem__(self, item): 
-        cls = type(self) 
         if isinstance(item, slice):
             if self.frequency is None or isinstance(self.frequency, (int, float)):
                 return self.__class__(self.values[item], self.frequency)
@@ -64,7 +63,6 @@ class BaseWav(object):
     def __len__(self):
         return self.length
 
-    # To do: 实现基本的加减乘除功能
     def _check_identity(self, other):
         if self.__class__ != other.__class__:
             return 'Different Domain'
@@ -94,19 +92,22 @@ class BaseWav(object):
             return self.__class__(self.values * other, self.frequency)
         else:
             raise Exception('Two wavs with ' + self._check_identity(other) + ' can not be multiplied!')
-
+    
+    # Todo: Design the way of divide for two wave
     def __div__(self, other):
         pass
     
     # utils
     # 零均值化（去均值化）
     def demean(self, inplace=False):
+        """去均值"""
         if inplace:
             self.values = self.values - np.mean(self.values)
         else:
             return self.__class__(self.values - np.mean(self.values), self.frequency)
     # 归一化
     def normalize(self, inplace=False):
+        """最大值法归一化"""
         if inplace:
             self.values = self.values / np.max(np.abs(self.values))
         else:
@@ -239,7 +240,7 @@ class BaseWav(object):
 
 if __name__ == "__main__":
     # init basewav
-    x = np.linspace(0, 1000, 800000)
+    x = np.linspace(0, 1000, 8000)
     y1 = np.cos(x) 
     y2 = 3 * np.sin(10 * x) + 1
     test_wav1 = BaseWav(y1)
@@ -270,6 +271,6 @@ if __name__ == "__main__":
 
     # test the rolling calculation
     print('test rolling calculation'.center(40, '-'))
-    print(wav_sum.rolling(100, 50).RMS)
+    print(wav_sum.rolling(1000, 500).RMS)
 
 
