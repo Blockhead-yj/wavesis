@@ -7,7 +7,7 @@ from matplotlib import cm
 from matplotlib.ticker import LinearLocator
 from tqdm import trange, tqdm
 
-from pycycspectrum import CPS_W_parrallel, CPS_W_cupy, SCoh_W
+from .pycycspectrum import CPS_W_parrallel, CPS_W_cupy, SCoh_W
 
 plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
